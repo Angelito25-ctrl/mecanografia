@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego de Mecanografía</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #282c36;
+            color: white;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #3b3f4a;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+        }
+        #word-display {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #f4d03f;
+        }
+        input {
+            font-size: 18px;
+            padding: 10px;
+            width: 100%;
+            text-align: center;
+            background-color: #1e2127;
+            color: white;
+            border: 1px solid #f4d03f;
+            border-radius: 5px;
+        }
+        #stats, #high-scores {
+            margin-top: 20px;
+        }
+        .btn {
+            padding: 10px 20px;
+            margin-top: 10px;
+            background-color: #f4d03f;
+            color: #282c36;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+        .btn:hover {
+            background-color: #d4ac0d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Juego de Mecanografía</h1>
+        <p>Escribe la palabra lo más rápido posible</p>
+        <div id="word-display"></div>
+        <input type="text" id="word-input" placeholder="Escribe aquí..." autofocus>
+        <div id="stats">
+            <p>Tiempo: <span id="time">30</span> s</p>
+            <p>Puntaje: <span id="score">0</span></p>
+            <p>Palabras por minuto (WPM): <span id="wpm">0</span></p>
+        </div>
+        <button class="btn" id="restart-btn">Reiniciar</button>
+        <div id="high-scores">
+            <h3>Mejores Puntajes</h3>
+            <ul id="high-score-list"></ul>
+        </div>
+    </div>
+
+    <script>
+        const words = ["rápido", "teclado", "javascript", "computadora", "programación", "desafío", "código", "desarrollo", "inteligente", "competencia", "velocidad", "escribir", "habilidad", "palabra", "reto", "desempeño", "práctica", "perfección", "agilidad", "tecnología"];
+        const wordDisplay = document.getElementById("word-display");
+        const wordInput = document.getElementById("word-input");
+        const timeDisplay = document.getElementById("time");
+        const scoreDisplay = document.getElementById("score");
+        const wpmDisplay = document.getElementById("wpm");
+        const restartBtn = document.getElementById("restart-btn");
+        const highScoreList = document.getElementById("high-score-list");
+        
+        let time = 30;
+        let score = 0;
+        let interval;
+        let wordsTyped = 0;
+        let highScores = JSON.parse(localStorage.getItem("highScores")) || [];
+        
+        function getRandomWord() {
+            return words[Math.floor(Math.random() * words.length)];
+        }
+        
+        function startGame() {
+            wordDisplay.innerText = getRandomWord();
+            wordInput.focus();
+            interval = setInterval(updateTime, 1000);
+        }
+        
+        function updateTime() {
+            if (time > 0) {
+                time--;
+                timeDisplay.innerText = time;
+            } else {
+                clearInterval(interval);
+                wordInput.disabled = true;
+                updateHighScores();
+                alert(`Juego terminado! Puntuación: ${score}, WPM: ${wpmDisplay.innerText}`);
+            }
+        }
+        
+        wordInput.addEventListener("input", function() {
+            let currentWord = wordDisplay.innerText;
+            let inputText = wordInput.value;
+            
+            if (currentWord.startsWith(inputText)) {
+                wordInput.style.color = "#00ff00"; // Verde si es correcto
+            } else {
+                wordInput.style.color = "#ff0000"; // Rojo si hay error
+            }
+            
+            if (inputText.trim() === currentWord) {
+                score++;
+                wordsTyped++;
+                scoreDisplay.innerText = score;
+                wordInput.value = "";
+                wordDisplay.innerText = getRandomWord();
+                wpmDisplay.innerText = ((wordsTyped / (30 - time)) * 60).toFixed(1);
+            }
+        });
+        
+        function updateHighScores() {
+            highScores.push({ score, wpm: parseFloat(wpmDisplay.innerText) });
+            highScores.sort((a, b) => b.score - a.score);
+            highScores = highScores.slice(0, 5);
+            localStorage.setItem("highScores", JSON.stringify(highScores));
+            highScoreList.innerHTML = highScores.map(h => `<li>Puntaje: ${h.score}, WPM: ${h.wpm}</li>`).join("");
+        }
+        
+        restartBtn.addEventListener("click", function() {
+            clearInterval(interval);
+            time = 30;
+            score = 0;
+            wordsTyped = 0;
+            timeDisplay.innerText = time;
+            scoreDisplay.innerText = score;
+            wpmDisplay.innerText = "0";
+            wordInput.disabled = false;
+            wordInput.value = "";
+            wordInput.style.color = "white";
+            startGame();
+        });
+        
+        startGame();
+        updateHighScores();
+    </script>
+</body>
+</html>
